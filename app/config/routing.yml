@@ -1,0 +1,7 @@
+app:
+    resource: '@AppBundle/Controller/'
+    type: annotation
+
+get_jobs:
+    path:    /jobs
+    defaults : { _controller : AppBundle:Job:index }
