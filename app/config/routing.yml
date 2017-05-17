@@ -1,7 +1,9 @@
 app:
-    resource: '@AppBundle/Controller/'
+    resource: '@AppBundle/Controller/DefaultController.php'
     type: annotation
 
-get_jobs:
-    path:    /jobs
-    defaults : { _controller : AppBundle:Job:index }
+jobs:
+    type :    annotation
+    resource: AppBundle\Controller\JobController
+
+
