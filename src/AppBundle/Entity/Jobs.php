@@ -63,6 +63,17 @@ class Jobs
         return $this->id;
     }
 
+    /**
+     * Get id
+     *
+     * @return int
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $id;
+    }
 
     /**
      * Get title

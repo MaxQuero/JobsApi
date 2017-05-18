@@ -18,11 +18,12 @@ use Symfony\Component\HttpFoundation\Response;
 class JobController extends Controller
 {
     /**
+     * Gives all jobs with json format
+     *
      * @Get("/api/jobs")
      */
     public function indexAction()
     {
-
         $jobs = $this->getDoctrine()
             ->getRepository('AppBundle:Jobs')
             ->findAll();
@@ -44,38 +45,43 @@ class JobController extends Controller
             ];
         }
 
-        // Récupération du view handler
+        // Getting the view handler
         $viewHandler = $this->get('fos_rest.view_handler');
 
-        // Création d'une vue FOSRestBundle
+        // Creation of a view FOSUserBundle
         $view = View::create($formatted);
         $view->setFormat('json');
 
-        // Gestion de la réponse
+        //Handle the response
         return $viewHandler->handle($view);
     }
 
     /**
+     * Scrap alsaCreation website and parse all last jobs data into db
+     *
      * @Get("/jobs")
      */
     public function getInfosAction()
     {
         $url = 'https://emploi.alsacreations.com/';
         $content = file_get_contents($url);
+        // truncate Table so that we have only recent ones
+        $this->truncateAction();
 
-        $this->deleteAction();
-        $test = $this->getElContentsByTagClass($content, 'li', 'offre');
-        foreach ($test as $te) {
-            $title = $this->getElContentsByTagClass($te, 'span', 'title-link');
-            $title = array_shift($title);
-            $society = $this->getElContentsByTagClass($te, 'b', 'societe');
-            $society = array_shift($society);
+        $offres = $this->getElContentsByTagClass($content, 'li', 'offre');
+        foreach ($offres as $offre) {
+            $title = $this->getElContentsByTagClass($offre, 'span', 'title-link');
+            $title = utf8_decode(array_shift($title));
+            $society = $this->getElContentsByTagClass($offre, 'b', 'societe');
+            $society = utf8_decode(array_shift($society));
+            var_dump(utf8_decode($title));
             //$place = $this->getElContentsByTagClass($te, 'span', 'lieu');
-            preg_match_all('#<i aria-hidden="true" class="icon icon-location"></i>(.*?)<br>#', $te, $town);
+            preg_match_all('#<i aria-hidden="true" class="icon icon-location"></i>(.*?)<#', $offre, $town);
             $city = array_shift($town[1]);
-            preg_match_all('#<br>\((.*?)\)</span>#', $te, $department);
+            preg_match_all('#<br>\((.*?)\)</span>#', $offre, $department);
             $department = array_shift($department[1]);
-            //destroy pour recréer
+
+            // Save into DB
             $this->createAction($title, $society, $city, $department);
 
 
@@ -94,6 +100,9 @@ class JobController extends Controller
         return $innerHTML;
     }
 
+    /**
+     * Get content of tag + classs name
+     */
     function getElContentsByTagClass($html,$tag,$class)
     {
         $doc = new DOMDocument();
@@ -115,6 +124,8 @@ class JobController extends Controller
     }
 
     /**
+     * Create a new job
+     *
      * @Post("/job")
      */
     function createAction($title, $society, $city, $department){
@@ -128,20 +139,24 @@ class JobController extends Controller
         $em->persist($job);
 
         $em->flush();
-
         return new Response('Saved new job with id '.$job->getId());
     }
 
-    function deleteAction()
+    /**
+     * Truncate job table and set auto_increment id to 1
+     *
+     */
+    function truncateAction()
     {
         $em = $this->getDoctrine()->getManager();
-        $jobs = $this->getDoctrine()
-            ->getRepository('AppBundle:Jobs')
-            ->findAll();
-        foreach ($jobs as $job) {
-            $em->remove($job);
-            $em->flush();
-        }
+        $className = 'AppBundle:Jobs';
+        $cmd = $em->getClassMetadata($className);
+        $connection = $em->getConnection();
+        $dbPlatform = $connection->getDatabasePlatform();
+        $connection->query('SET FOREIGN_KEY_CHECKS=0');
+        $q = $dbPlatform->getTruncateTableSql($cmd->getTableName());
+        $connection->executeUpdate($q);
+        $connection->query('SET FOREIGN_KEY_CHECKS=1');
 
     }
 }
