@@ -63,18 +63,32 @@ class JobController extends Controller
      */
     public function getInfosAction()
     {
+
+        $arrContextOptions=array(
+            "ssl"=>array(
+                "verify_peer"=>false,
+                "verify_peer_name"=>false,
+            ),
+        );
+        $response =
+
+        error_reporting(~0);
+        ini_set('display_errors', 1);
         $url = 'https://emploi.alsacreations.com/';
-        $content = file_get_contents($url);
+        $content = file_get_contents($url, false, stream_context_create($arrContextOptions));;
+
         // truncate Table so that we have only recent ones
         $this->truncateAction();
 
         $offres = $this->getElContentsByTagClass($content, 'li', 'offre');
+
+        //var_dump($offres);
         foreach ($offres as $offre) {
             $title = $this->getElContentsByTagClass($offre, 'span', 'title-link');
             $title = utf8_decode(array_shift($title));
             $society = $this->getElContentsByTagClass($offre, 'b', 'societe');
             $society = utf8_decode(array_shift($society));
-            var_dump(utf8_decode($title));
+            //var_dump(utf8_decode($title));
             //$place = $this->getElContentsByTagClass($te, 'span', 'lieu');
             preg_match_all('#<i aria-hidden="true" class="icon icon-location"></i>(.*?)<#', $offre, $town);
             $city = array_shift($town[1]);
@@ -112,6 +126,7 @@ class JobController extends Controller
         $doc->loadHTML($html);//Turn the $html string into a DOM document
         libxml_use_internal_errors(false);
         $els = $doc->getElementsByTagName($tag); //Find the elements matching our tag name ("div" in this example)
+
         foreach($els as $el)
         {
             //for each element, get the class, and if it matches return it's contents
