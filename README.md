@@ -12,7 +12,7 @@ Récupérez le projet JobsApi en faisant un Git clone (git clone https://github.
 
 Faites un composer install dans le dossier du projet pour installer les dépendances, telles que le restBundle.
 
-Créez la base de données "digital_garden" grâce à la commande suivante : 'php bin/console doctrine:database:create'
+Créez la base de données "digital_garden" grâce à la commande suivante : 'php bin/console doctrine:database:create' (attention a bien modifié le nom lorsque celui-ci est demandé).
 
 Mettez à jour la base de données et créez les tables grâce aux entity créés dans Symfony grâce à la commande suivante : "php bin/console doctrine:schema:update --force"
 
